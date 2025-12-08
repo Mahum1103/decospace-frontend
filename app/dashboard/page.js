@@ -4,31 +4,31 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabaseClient";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL; // e.g., https://xxx.hf.space
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [sessionEmail, setSessionEmail] = useState(null);
-  const [checkingSession, setCheckingSession] = useState(true);
+  const [userEmail, setUserEmail] = useState(null);
+  const [loadingSession, setLoadingSession] = useState(true);
 
   const [roomType, setRoomType] = useState("Living room");
   const [dimensions, setDimensions] = useState("12x15");
-  const [style, setStyle] = useState("neutral, cozy, renter-friendly");
-  const [budget, setBudget] = useState("400");
+  const [style, setStyle] = useState("cozy, neutral, modern");
+  const [budget, setBudget] = useState("500");
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [summary, setSummary] = useState("");
   const [posts, setPosts] = useState([]);
+  const [savedDesigns, setSavedDesigns] = useState([]);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      const user = data.session?.user;
-      if (!user) {
+      if (!data.session?.user) {
         router.push("/");
       } else {
-        setSessionEmail(user.email ?? null);
-        setCheckingSession(false);
+        setUserEmail(data.session.user.email);
+        setLoadingSession(false);
       }
     });
   }, [router]);
@@ -38,24 +38,17 @@ export default function DashboardPage() {
     router.push("/");
   }
 
-  async function handleSubmit(e) {
+  async function handleGenerate(e) {
     e.preventDefault();
+    setLoading(true);
     setError(null);
     setSummary("");
     setPosts([]);
 
-    if (!BACKEND_URL) {
-      setError("Backend URL is not configured.");
-      return;
-    }
-
-    setIsSubmitting(true);
     try {
       const res = await fetch(`${BACKEND_URL}/design`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           room_type: roomType,
           dimensions,
@@ -64,134 +57,135 @@ export default function DashboardPage() {
         })
       });
 
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`Backend error: ${text}`);
-      }
-
       const data = await res.json();
-      setSummary(data.summary || "");
+      setSummary(data.summary);
       setPosts(data.posts || []);
     } catch (err) {
-      console.error(err);
-      setError(err.message || "Something went wrong generating your design.");
+      setError("Something went wrong generating your design.");
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
   }
 
-  if (checkingSession) {
-    return <p className="text-sm text-slate-500">Checking session...</p>;
+  function saveDesign() {
+    const newDesign = {
+      roomType,
+      dimensions,
+      style,
+      budget,
+      summary
+    };
+    setSavedDesigns((prev) => [...prev, newDesign]);
   }
 
+  if (loadingSession) return <p>Loading...</p>;
+
   return (
-    <div className="space-y-6">
-      <header className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">DecoSpace</h1>
-          <p className="text-sm text-slate-600">
-            Signed in as {sessionEmail}. Describe your room and let DecoSpace
-            pull community inspiration for you.
-          </p>
+          <h1 className="text-3xl font-bold">DecoSpace Dashboard</h1>
+          <p className="text-sm text-slate-600">Logged in as {userEmail}</p>
         </div>
         <button
           onClick={handleLogout}
-          className="rounded-lg border border-slate-200 bg-white text-xs px-3 py-1.5"
+          className="border border-slate-200 px-4 py-2 rounded-lg text-sm"
         >
           Log out
         </button>
-      </header>
+      </div>
 
-      {error && (
-        <p className="text-sm text-red-600 border border-red-200 bg-red-50 rounded-md px-3 py-2">
-          {error}
-        </p>
-      )}
-
+      {/* Generator */}
       <form
-        onSubmit={handleSubmit}
-        className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-4"
+        onSubmit={handleGenerate}
+        className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4"
       >
-        <div className="grid gap-4 md:grid-cols-2">
-          <div>
-            <label className="block text-sm font-medium mb-1">Room type</label>
-            <input
-              value={roomType}
-              onChange={(e) => setRoomType(e.target.value)}
-              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Dimensions (ft)
-            </label>
-            <input
-              value={dimensions}
-              onChange={(e) => setDimensions(e.target.value)}
-              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
-            />
-          </div>
-        </div>
+        <h2 className="text-xl font-semibold">Generate a New Room Design</h2>
 
-        <div>
-          <label className="block text-sm font-medium mb-1">Style notes</label>
-          <textarea
-            value={style}
-            onChange={(e) => setStyle(e.target.value)}
-            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
-            rows={3}
-          />
-        </div>
-
-        <div className="max-w-[200px]">
-          <label className="block text-sm font-medium mb-1">Budget ($)</label>
+        <div className="grid md:grid-cols-2 gap-4">
           <input
-            type="text"
-            value={budget}
-            onChange={(e) => setBudget(e.target.value)}
-            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
+            value={roomType}
+            onChange={(e) => setRoomType(e.target.value)}
+            placeholder="Room Type"
+            className="border p-2 rounded-lg"
+          />
+          <input
+            value={dimensions}
+            onChange={(e) => setDimensions(e.target.value)}
+            placeholder="Room Dimensions"
+            className="border p-2 rounded-lg"
           />
         </div>
+
+        <textarea
+          value={style}
+          onChange={(e) => setStyle(e.target.value)}
+          placeholder="Style Preferences"
+          className="border p-2 rounded-lg w-full"
+        />
+
+        <input
+          value={budget}
+          onChange={(e) => setBudget(e.target.value)}
+          placeholder="Budget"
+          className="border p-2 rounded-lg w-full max-w-[200px]"
+        />
 
         <button
           type="submit"
-          disabled={isSubmitting}
-          className="inline-flex items-center gap-2 bg-slate-900 text-white text-sm rounded-lg px-4 py-2"
+          className="bg-black text-white px-6 py-2 rounded-lg"
+          disabled={loading}
         >
-          {isSubmitting ? "Designing your space..." : "Generate my design"}
+          {loading ? "Generating..." : "Generate Design"}
         </button>
       </form>
 
+      {/* AI Output */}
       {summary && (
-        <section className="space-y-4">
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-2">
-            <h2 className="text-lg font-semibold">Summary</h2>
-            <p className="text-sm whitespace-pre-line">{summary}</p>
-          </div>
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4">
+          <h2 className="text-xl font-semibold">Your AI Design Plan</h2>
+          <p className="text-sm text-slate-700">{summary}</p>
 
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-3">
-            <h2 className="text-lg font-semibold">
-              Community inspiration (Reddit)
-            </h2>
-            {posts.length === 0 ? (
-              <p className="text-sm text-slate-500">
-                No posts found or Reddit request failed.
-              </p>
-            ) : (
-              <ul className="space-y-2">
-                {posts.map((title, idx) => (
-                  <li
-                    key={idx}
-                    className="border border-slate-200 rounded-lg p-3 text-sm bg-slate-50"
-                  >
-                    {title}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </section>
+          <button
+            onClick={saveDesign}
+            className="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm"
+          >
+            Save This Design
+          </button>
+        </div>
       )}
+
+      {/* Community Inspiration */}
+      {posts.length > 0 && (
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4">
+          <h2 className="text-xl font-semibold">Community Inspiration</h2>
+          <ul className="grid gap-3">
+            {posts.map((title, i) => (
+              <li key={i} className="border p-3 rounded-lg text-sm bg-slate-50">
+                {title}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Saved Designs */}
+      {savedDesigns.length > 0 && (
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4">
+          <h2 className="text-xl font-semibold">Saved Designs</h2>
+
+          {savedDesigns.map((d, i) => (
+            <div key={i} className="border rounded-lg p-3 text-sm">
+              <p><b>Room:</b> {d.roomType}</p>
+              <p><b>Style:</b> {d.style}</p>
+              <p><b>Budget:</b> ${d.budget}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {error && <p className="text-red-500 text-sm">{error}</p>}
     </div>
   );
 }
