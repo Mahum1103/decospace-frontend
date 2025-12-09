@@ -8,20 +8,21 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 export default function DashboardPage() {
   const router = useRouter();
+
   const [userEmail, setUserEmail] = useState(null);
   const [loadingSession, setLoadingSession] = useState(true);
 
   const [roomType, setRoomType] = useState("Living room");
   const [dimensions, setDimensions] = useState("12x15");
-  const [style, setStyle] = useState("cozy, neutral, modern");
+  const [style, setStyle] = useState("Modern cozy");
   const [budget, setBudget] = useState("500");
 
   const [loading, setLoading] = useState(false);
   const [summary, setSummary] = useState("");
-  const [posts, setPosts] = useState([]);
-  const [savedDesigns, setSavedDesigns] = useState([]);
+  const [images, setImages] = useState([]);
   const [error, setError] = useState(null);
 
+  // ✅ Protect the dashboard
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       if (!data.session?.user) {
@@ -38,12 +39,13 @@ export default function DashboardPage() {
     router.push("/");
   }
 
+  // ✅ Generate AI Design
   async function handleGenerate(e) {
     e.preventDefault();
     setLoading(true);
     setError(null);
     setSummary("");
-    setPosts([]);
+    setImages([]);
 
     try {
       const res = await fetch(`${BACKEND_URL}/design`, {
@@ -57,31 +59,22 @@ export default function DashboardPage() {
         })
       });
 
+      if (!res.ok) throw new Error("API error");
+
       const data = await res.json();
-      setSummary(data.summary);
-      setPosts(data.posts || []);
+      setSummary(data.summary || "");
+      setImages(data.images || []);
     } catch (err) {
-      setError("Something went wrong generating your design.");
+      setError("Design generation failed. Please try again.");
     } finally {
       setLoading(false);
     }
   }
 
-  function saveDesign() {
-    const newDesign = {
-      roomType,
-      dimensions,
-      style,
-      budget,
-      summary
-    };
-    setSavedDesigns((prev) => [...prev, newDesign]);
-  }
-
-  if (loadingSession) return <p>Loading...</p>;
+  if (loadingSession) return <p className="p-6">Loading...</p>;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -118,12 +111,17 @@ export default function DashboardPage() {
           />
         </div>
 
-        <textarea
+        <select
           value={style}
           onChange={(e) => setStyle(e.target.value)}
-          placeholder="Style Preferences"
           className="border p-2 rounded-lg w-full"
-        />
+        >
+          <option>Modern cozy</option>
+          <option>Minimalist</option>
+          <option>Luxury glam</option>
+          <option>Boho</option>
+          <option>Industrial</option>
+        </select>
 
         <input
           value={budget}
@@ -145,43 +143,27 @@ export default function DashboardPage() {
       {summary && (
         <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4">
           <h2 className="text-xl font-semibold">Your AI Design Plan</h2>
-          <p className="text-sm text-slate-700">{summary}</p>
-
-          <button
-            onClick={saveDesign}
-            className="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm"
-          >
-            Save This Design
-          </button>
+          <p className="text-sm text-slate-700 whitespace-pre-line">
+            {summary}
+          </p>
         </div>
       )}
 
-      {/* Community Inspiration */}
-      {posts.length > 0 && (
+      {/* Visual Inspiration */}
+      {images.length > 0 && (
         <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4">
-          <h2 className="text-xl font-semibold">Community Inspiration</h2>
-          <ul className="grid gap-3">
-            {posts.map((title, i) => (
-              <li key={i} className="border p-3 rounded-lg text-sm bg-slate-50">
-                {title}
-              </li>
+          <h2 className="text-xl font-semibold">Visual Inspiration</h2>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {images.map((src, i) => (
+              <img
+                key={i}
+                src={src}
+                alt="Design inspiration"
+                className="rounded-lg object-cover w-full h-40"
+              />
             ))}
-          </ul>
-        </div>
-      )}
-
-      {/* Saved Designs */}
-      {savedDesigns.length > 0 && (
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4">
-          <h2 className="text-xl font-semibold">Saved Designs</h2>
-
-          {savedDesigns.map((d, i) => (
-            <div key={i} className="border rounded-lg p-3 text-sm">
-              <p><b>Room:</b> {d.roomType}</p>
-              <p><b>Style:</b> {d.style}</p>
-              <p><b>Budget:</b> ${d.budget}</p>
-            </div>
-          ))}
+          </div>
         </div>
       )}
 
