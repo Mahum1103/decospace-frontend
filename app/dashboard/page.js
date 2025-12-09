@@ -27,48 +27,36 @@ export default function DashboardPage() {
   const [savedDesigns, setSavedDesigns] = useState([]);
   const [error, setError] = useState(null);
 
-  // ✅ Protect dashboard
+  // ✅ Auth protection
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (!data.session?.user) {
-        router.push("/");
-      } else {
+      if (!data.session?.user) router.push("/");
+      else {
         setUserEmail(data.session.user.email);
         setLoadingSession(false);
       }
     });
   }, [router]);
 
-  // ✅ Load saved designs from localStorage
+  // ✅ Load saved designs
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      const raw = window.localStorage.getItem("decospace_saved_designs");
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) setSavedDesigns(parsed);
-      }
-    } catch {}
+    const raw = localStorage.getItem("decospace_saved_designs");
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) setSavedDesigns(parsed);
+    }
   }, []);
 
-  // ✅ Persist saved designs
+  // ✅ Persist saved
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      window.localStorage.setItem(
-        "decospace_saved_designs",
-        JSON.stringify(savedDesigns)
-      );
-    } catch {}
+    localStorage.setItem("decospace_saved_designs", JSON.stringify(savedDesigns));
   }, [savedDesigns]);
 
-  // ✅ Logout
   async function handleLogout() {
     await supabase.auth.signOut();
     router.push("/");
   }
 
-  // ✅ Generate design
   async function handleGenerate(e) {
     e.preventDefault();
     setLoading(true);
@@ -77,7 +65,7 @@ export default function DashboardPage() {
     setImages([]);
 
     if (!BACKEND_URL) {
-      setError("Backend URL is missing.");
+      setError("Backend URL missing.");
       setLoading(false);
       return;
     }
@@ -98,16 +86,15 @@ export default function DashboardPage() {
       if (!res.ok) throw new Error("API error");
 
       const data = await res.json();
-      setSummary(typeof data.summary === "string" ? data.summary : "");
+      setSummary(data.summary || "");
       setImages(Array.isArray(data.images) ? data.images : []);
-    } catch (err) {
+    } catch {
       setError("Design generation failed.");
     } finally {
       setLoading(false);
     }
   }
 
-  // ✅ Save full design with images
   function handleSaveDesign() {
     if (!summary) return;
 
@@ -128,142 +115,126 @@ export default function DashboardPage() {
   }
 
   if (loadingSession) {
-    return <p className="p-6 text-sm text-slate-600">Loading dashboard...</p>;
+    return <div className="p-10 text-slate-500">Loading your workspace…</div>;
   }
 
   return (
-    <div className="min-h-screen pb-10 space-y-8">
-      {/* Header */}
-      <header className="flex flex-col md:flex-row md:items-center md:justify-between">
+    <div className="min-h-screen bg-gradient-to-br from-[#f8fafc] to-[#eef2f7] px-6 py-10">
+      {/* HEADER */}
+      <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between mb-10">
         <div>
-          <h1 className="text-3xl font-bold">DecoSpace</h1>
-          <p className="text-sm text-slate-600">{userEmail}</p>
+          <h1 className="text-4xl font-bold tracking-tight">DecoSpace</h1>
+          <p className="text-sm text-slate-600 mt-1">{userEmail}</p>
         </div>
         <button
           onClick={handleLogout}
-          className="mt-2 border px-4 py-2 rounded text-sm"
+          className="mt-4 md:mt-0 rounded-xl border px-5 py-2 text-sm bg-white hover:bg-slate-50 shadow-sm"
         >
           Log out
         </button>
-      </header>
+      </div>
 
-      {/* Tabs */}
-      <nav className="border-b flex gap-6">
-        <button
-          onClick={() => setActiveTab("generate")}
-          className={`pb-2 border-b-2 ${
-            activeTab === "generate"
-              ? "border-black font-semibold"
-              : "border-transparent text-slate-500"
-          }`}
-        >
-          Generate
-        </button>
-        <button
-          onClick={() => setActiveTab("saved")}
-          className={`pb-2 border-b-2 ${
-            activeTab === "saved"
-              ? "border-black font-semibold"
-              : "border-transparent text-slate-500"
-          }`}
-        >
-          Saved
-        </button>
-      </nav>
-
-      {/* Generate Tab */}
-      {activeTab === "generate" && (
-        <div className="grid lg:grid-cols-2 gap-6">
-          <form
-            onSubmit={handleGenerate}
-            className="bg-white border rounded-2xl p-6 space-y-4"
+      {/* TABS */}
+      <div className="max-w-7xl mx-auto flex gap-8 border-b mb-10">
+        {["generate", "saved"].map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`pb-3 text-sm font-medium transition ${
+              activeTab === tab
+                ? "border-b-2 border-black text-black"
+                : "text-slate-500 hover:text-black"
+            }`}
           >
-            <h2 className="text-xl font-semibold">Design Input</h2>
+            {tab === "generate" ? "Generate Design" : "Saved Designs"}
+          </button>
+        ))}
+      </div>
 
-            <label className="block text-sm">
-              Room Type
-              <input
-                value={roomType}
-                onChange={(e) => setRoomType(e.target.value)}
-                className="border w-full p-2 rounded mt-1"
-              />
-            </label>
+      {/* GENERATE TAB */}
+      {activeTab === "generate" && (
+        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-10">
+          {/* LEFT FORM */}
+          <div className="bg-white rounded-3xl p-8 shadow-xl space-y-6">
+            <h2 className="text-2xl font-semibold">Design Your Space</h2>
 
-            <label className="block text-sm">
-              Dimensions
-              <input
-                value={dimensions}
-                onChange={(e) => setDimensions(e.target.value)}
-                className="border w-full p-2 rounded mt-1"
-              />
-            </label>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-semibold">Room Type</label>
+                <input
+                  value={roomType}
+                  onChange={(e) => setRoomType(e.target.value)}
+                  className="mt-1 w-full rounded-xl border px-4 py-2 text-sm focus:ring-2 focus:ring-black"
+                />
+              </div>
 
-            <label className="block text-sm">
-              Style
+              <div>
+                <label className="text-xs font-semibold">Dimensions</label>
+                <input
+                  value={dimensions}
+                  onChange={(e) => setDimensions(e.target.value)}
+                  className="mt-1 w-full rounded-xl border px-4 py-2 text-sm focus:ring-2 focus:ring-black"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold">Design Style</label>
               <select
                 value={style}
                 onChange={(e) => setStyle(e.target.value)}
-                className="border w-full p-2 rounded mt-1"
+                className="mt-1 w-full rounded-xl border px-4 py-2 text-sm"
               >
                 {[
-                  "Modern cozy",
-                  "Minimalist",
-                  "Luxury glam",
-                  "Boho",
-                  "Industrial",
-                  "Scandinavian",
-                  "Japandi",
-                  "Art Deco",
-                  "Farmhouse",
-                  "Mid-century modern",
-                  "Urban chic",
-                  "Vintage",
-                  "Coastal",
-                  "Dark academia"
+                  "Modern cozy","Minimalist","Luxury glam","Boho","Industrial",
+                  "Scandinavian","Japandi","Art Deco","Farmhouse",
+                  "Mid-century modern","Urban chic","Vintage","Coastal","Dark academia"
                 ].map((s) => (
                   <option key={s}>{s}</option>
                 ))}
               </select>
-            </label>
+            </div>
 
-            <label className="block text-sm">
-              Budget ($)
+            <div>
+              <label className="text-xs font-semibold">Budget ($)</label>
               <input
                 value={budget}
                 onChange={(e) => setBudget(e.target.value)}
-                className="border w-40 p-2 rounded mt-1"
+                className="mt-1 w-40 rounded-xl border px-4 py-2 text-sm"
               />
-            </label>
+            </div>
 
-            <label className="block text-sm">
-              Vibe & Priorities (optional)
+            <div>
+              <label className="text-xs font-semibold">Vibe & Priorities</label>
               <textarea
                 value={vibe}
                 onChange={(e) => setVibe(e.target.value)}
-                className="border w-full p-2 rounded mt-1"
+                className="mt-1 w-full rounded-xl border px-4 py-2 text-sm"
                 placeholder="cozy, pink, plants, renter-friendly..."
               />
-            </label>
+            </div>
 
             <button
-              type="submit"
+              onClick={handleGenerate}
               disabled={loading}
-              className="bg-black text-white px-6 py-2 rounded"
+              className="w-full bg-black text-white rounded-xl py-3 font-medium hover:opacity-90 transition"
             >
-              {loading ? "Generating..." : "Generate"}
+              {loading ? "Generating…" : "Generate Design"}
             </button>
 
-            {error && <p className="text-red-500 text-sm">{error}</p>}
-          </form>
+            {error && <p className="text-sm text-red-500">{error}</p>}
+          </div>
 
-          <div className="space-y-4">
+          {/* RIGHT RESULTS */}
+          <div className="space-y-6">
             {summary && (
-              <div className="bg-white border rounded-2xl p-6 space-y-3">
-                <p className="text-sm whitespace-pre-line">{summary}</p>
-
+              <div className="bg-white rounded-3xl p-8 shadow-xl">
+                <p className="whitespace-pre-line text-sm text-slate-700">
+                  {summary}
+                </p>
                 <button
                   onClick={handleSaveDesign}
-                  className="text-blue-600 text-sm underline"
+                  className="mt-4 text-sm text-blue-600 underline"
                 >
                   Save this design
                 </button>
@@ -271,57 +242,50 @@ export default function DashboardPage() {
             )}
 
             {images.length > 0 && (
-              <div className="bg-white border rounded-2xl p-6">
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {images.map((src, i) => (
-                    <img
-                      key={i}
-                      src={src}
-                      className="rounded h-32 w-full object-cover"
-                    />
-                  ))}
-                </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {images.map((src, i) => (
+                  <img
+                    key={i}
+                    src={src}
+                    className="rounded-2xl h-44 w-full object-cover shadow-md hover:scale-[1.03] transition"
+                  />
+                ))}
               </div>
             )}
           </div>
         </div>
       )}
 
-      {/* Saved Tab */}
+      {/* SAVED TAB */}
       {activeTab === "saved" && (
-        <div className="grid md:grid-cols-2 gap-4">
+        <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-6">
           {savedDesigns.length === 0 && (
-            <p className="text-sm text-slate-600">No saved designs yet.</p>
+            <p className="text-slate-500">No saved designs yet.</p>
           )}
 
           {savedDesigns.map((d) => (
             <div
               key={d.id}
-              className="bg-white border rounded-2xl p-5 space-y-2"
+              className="bg-white rounded-3xl p-6 shadow-xl space-y-3"
             >
-              <h3 className="font-semibold text-sm">
-                {d.roomType} — {d.style}
-              </h3>
+              <div>
+                <h3 className="font-semibold">{d.roomType} — {d.style}</h3>
+                <p className="text-xs text-slate-500">
+                  {d.dimensions} · ${d.budget}
+                </p>
+              </div>
 
-              <p className="text-xs text-slate-500">
-                {d.dimensions} · ${d.budget}
+              <p className="text-xs whitespace-pre-line text-slate-700">
+                {d.summary}
               </p>
 
-              {d.vibe && (
-                <p className="text-xs italic text-slate-500">
-                  Vibe: {d.vibe}
-                </p>
-              )}
-
-              <p className="text-xs whitespace-pre-line">{d.summary}</p>
-
-              {Array.isArray(d.images) && d.images.length > 0 && (
+              {d.images?.length > 0 && (
                 <div className="grid grid-cols-3 gap-2 pt-2">
                   {d.images.slice(0, 3).map((src, idx) => (
                     <img
                       key={idx}
                       src={src}
-                      className="rounded h-20 w-full object-cover"
+                      className="rounded-xl h-20 w-full object-cover"
                     />
                   ))}
                 </div>
