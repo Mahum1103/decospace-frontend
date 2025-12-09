@@ -115,35 +115,35 @@ export default function DashboardPage() {
   }
 
   if (loadingSession) {
-    return <div className="p-10 text-slate-500">Loading your workspace…</div>;
+    return <div className="p-10 text-[#6b6259]">Loading your workspace...</div>;
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#f8fafc] to-[#eef2f7] px-6 py-10">
+    <div className="min-h-screen bg-[#d6ccc2] px-6 py-10">
       {/* HEADER */}
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between mb-10">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight">DecoSpace</h1>
-          <p className="text-sm text-slate-600 mt-1">{userEmail}</p>
+          <h1 className="text-4xl font-bold tracking-tight text-[#1a1a1a]">DecoSpace</h1>
+          <p className="text-sm text-[#6b6259] mt-1">{userEmail}</p>
         </div>
         <button
           onClick={handleLogout}
-          className="mt-4 md:mt-0 rounded-xl border px-5 py-2 text-sm bg-white hover:bg-slate-50 shadow-sm"
+          className="mt-4 md:mt-0 rounded-xl border border-[#d5bdaf] px-5 py-2 text-sm bg-[#f5ebe0] hover:bg-[#e3d5ca] shadow-sm"
         >
           Log out
         </button>
       </div>
 
       {/* TABS */}
-      <div className="max-w-7xl mx-auto flex gap-8 border-b mb-10">
+      <div className="max-w-7xl mx-auto flex gap-8 border-b border-[#d5bdaf] mb-10">
         {["generate", "saved"].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={`pb-3 text-sm font-medium transition ${
               activeTab === tab
-                ? "border-b-2 border-black text-black"
-                : "text-slate-500 hover:text-black"
+                ? "border-b-2 border-[#1a1a1a] text-[#1a1a1a]"
+                : "text-[#6b6259] hover:text-[#1a1a1a]"
             }`}
           >
             {tab === "generate" ? "Generate Design" : "Saved Designs"}
@@ -155,7 +155,7 @@ export default function DashboardPage() {
       {activeTab === "generate" && (
         <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-10">
           {/* LEFT FORM */}
-          <div className="bg-white rounded-3xl p-8 shadow-xl space-y-6">
+          <div className="bg-[#f5ebe0] rounded-3xl p-8 shadow-xl space-y-6 border border-[#d5bdaf]">
             <h2 className="text-2xl font-semibold">Design Your Space</h2>
 
             <div className="grid grid-cols-2 gap-4">
@@ -164,7 +164,7 @@ export default function DashboardPage() {
                 <input
                   value={roomType}
                   onChange={(e) => setRoomType(e.target.value)}
-                  className="mt-1 w-full rounded-xl border px-4 py-2 text-sm focus:ring-2 focus:ring-black"
+                  className="mt-1 w-full rounded-xl border border-[#d5bdaf] px-4 py-2 text-sm bg-[#edede9]"
                 />
               </div>
 
@@ -173,7 +173,7 @@ export default function DashboardPage() {
                 <input
                   value={dimensions}
                   onChange={(e) => setDimensions(e.target.value)}
-                  className="mt-1 w-full rounded-xl border px-4 py-2 text-sm focus:ring-2 focus:ring-black"
+                  className="mt-1 w-full rounded-xl border border-[#d5bdaf] px-4 py-2 text-sm bg-[#edede9]"
                 />
               </div>
             </div>
@@ -183,7 +183,7 @@ export default function DashboardPage() {
               <select
                 value={style}
                 onChange={(e) => setStyle(e.target.value)}
-                className="mt-1 w-full rounded-xl border px-4 py-2 text-sm"
+                className="mt-1 w-full rounded-xl border border-[#d5bdaf] px-4 py-2 text-sm bg-[#edede9]"
               >
                 {[
                   "Modern cozy","Minimalist","Luxury glam","Boho","Industrial",
@@ -200,7 +200,7 @@ export default function DashboardPage() {
               <input
                 value={budget}
                 onChange={(e) => setBudget(e.target.value)}
-                className="mt-1 w-40 rounded-xl border px-4 py-2 text-sm"
+                className="mt-1 w-40 rounded-xl border border-[#d5bdaf] px-4 py-2 text-sm bg-[#edede9]"
               />
             </div>
 
@@ -209,7 +209,7 @@ export default function DashboardPage() {
               <textarea
                 value={vibe}
                 onChange={(e) => setVibe(e.target.value)}
-                className="mt-1 w-full rounded-xl border px-4 py-2 text-sm"
+                className="mt-1 w-full rounded-xl border border-[#d5bdaf] px-4 py-2 text-sm bg-[#edede9]"
                 placeholder="cozy, pink, plants, renter-friendly..."
               />
             </div>
@@ -217,9 +217,9 @@ export default function DashboardPage() {
             <button
               onClick={handleGenerate}
               disabled={loading}
-              className="w-full bg-black text-white rounded-xl py-3 font-medium hover:opacity-90 transition"
+              className="w-full bg-[#1a1a1a] text-[#edede9] rounded-xl py-3 font-medium hover:opacity-90 transition"
             >
-              {loading ? "Generating…" : "Generate Design"}
+              {loading ? "Generating..." : "Generate Design"}
             </button>
 
             {error && <p className="text-sm text-red-500">{error}</p>}
@@ -228,13 +228,13 @@ export default function DashboardPage() {
           {/* RIGHT RESULTS */}
           <div className="space-y-6">
             {summary && (
-              <div className="bg-white rounded-3xl p-8 shadow-xl">
-                <p className="whitespace-pre-line text-sm text-slate-700">
+              <div className="bg-[#f5ebe0] rounded-3xl p-8 shadow-xl border border-[#d5bdaf]">
+                <p className="whitespace-pre-line text-sm text-[#1a1a1a]">
                   {summary}
                 </p>
                 <button
                   onClick={handleSaveDesign}
-                  className="mt-4 text-sm text-blue-600 underline"
+                  className="mt-4 text-sm underline"
                 >
                   Save this design
                 </button>
@@ -260,22 +260,22 @@ export default function DashboardPage() {
       {activeTab === "saved" && (
         <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-6">
           {savedDesigns.length === 0 && (
-            <p className="text-slate-500">No saved designs yet.</p>
+            <p className="text-[#6b6259]">No saved designs yet.</p>
           )}
 
           {savedDesigns.map((d) => (
             <div
               key={d.id}
-              className="bg-white rounded-3xl p-6 shadow-xl space-y-3"
+              className="bg-[#f5ebe0] rounded-3xl p-6 shadow-xl space-y-3 border border-[#d5bdaf]"
             >
               <div>
                 <h3 className="font-semibold">{d.roomType} — {d.style}</h3>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-[#6b6259]">
                   {d.dimensions} · ${d.budget}
                 </p>
               </div>
 
-              <p className="text-xs whitespace-pre-line text-slate-700">
+              <p className="text-xs whitespace-pre-line text-[#1a1a1a]">
                 {d.summary}
               </p>
 
