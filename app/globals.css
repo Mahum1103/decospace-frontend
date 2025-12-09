@@ -2,15 +2,37 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ===== DECO SPACE BRAND PALETTE ===== */
+:root {
+  --parchment: #edede9;
+  --dust-grey: #d6ccc2;
+  --linen: #f5ebe0;
+  --powder-petal: #e3d5ca;
+  --almond-silk: #d5bdaf;
+
+  --text-primary: #1a1a1a;
+  --text-secondary: #6b6259;
+}
+
+/* ===== GLOBAL BASE STYLES ===== */
 body {
-  background-color: #f6f1e9;  /* warm cream */
-  color: #1a1a1a;             /* charcoal black */
+  background-color: var(--dust-grey); /* MAIN APP BACKGROUND */
+  color: var(--text-primary);
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
 }
 
-input, select, textarea {
-  background-color: white;
+input,
+select,
+textarea {
+  background-color: var(--linen);
+  border: 1px solid var(--almond-silk);
+  color: var(--text-primary);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-secondary);
 }
 
 button {
