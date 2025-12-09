@@ -62,8 +62,12 @@ export default function DashboardPage() {
       if (!res.ok) throw new Error("API error");
 
       const data = await res.json();
-      setSummary(data.summary || "");
-      setImages(data.images || []);
+console.log("BACKEND URL:", BACKEND_URL);
+console.log("API RESPONSE:", data);
+
+setSummary(data.summary || "");
+setImages(data.images || []);
+
     } catch (err) {
       setError("Design generation failed. Please try again.");
     } finally {
